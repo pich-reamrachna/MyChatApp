@@ -1,3 +1,4 @@
+// Client.java
 package src;
 
 import java.io.*;
@@ -26,34 +27,35 @@ public class Client {
             BufferedReader in = new BufferedReader(new InputStreamReader(is));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            /*** LOGIN FLOW */
-            while (true) {
-                String line = in.readLine();
-                if (line == null) {
-                    System.out.println("Server disconnected during login.");
-                    return;
-                }
+            // === LOGIN FLOW ===
+            // Wait for server to ask for username
+            String usernamePrompt = in.readLine();
+            System.out.println(usernamePrompt);
+            String username = scanner.nextLine();
+            out.println(username);
 
-                // If this line is a prompt (like "Enter your username:"), print without newline
-                if (line.toLowerCase().contains("username") || line.toLowerCase().contains("password")) {
-                    System.out.println();
-                    System.out.print(line + " ");  // prompt stays on same line
-                    String input = scanner.nextLine();
-                    out.println(input);
-                    
-                } else {
-                    // For other messages, print normally
-                    System.out.println(line);
-                }
+            // Now wait for server to ask for password or new registration
+            String passwordPrompt = in.readLine();
+            System.out.println(passwordPrompt);
+            String password = scanner.nextLine();
+            out.println(password);
 
-                if (line.toLowerCase().contains("successful")) {
-                    break;
-                } else if (line.toLowerCase().contains("connection closing")) {
+            // Receive one or two lines of response
+            String line1 = in.readLine();
+            System.out.println(line1);
+
+            // Some servers will send a second line (login successful)
+            if (!line1.toLowerCase().contains("successful")) {
+                String line2 = in.readLine();
+                System.out.println(line2);
+
+                if (!line2.toLowerCase().contains("successful")) {
+                    System.out.println("Login failed. Exiting client.");
                     return;
                 }
             }
 
-            // Reader thread: listens for messages from server and prints each on new line
+            // Reader thread: listens for messages from server
             readerThread = new Thread(() -> {
                 try {
                     String response;
@@ -64,13 +66,13 @@ public class Client {
                     System.out.println("Connection closed by server.");
                 }
             });
-            readerThread.setDaemon(true);
             readerThread.start();
 
-            // === USER INPUT LOOP === // 
+            // Console input loop
+            String msg;
             while (true) {
                 if (scanner.hasNextLine()) {
-                    String msg = scanner.nextLine();
+                    msg = scanner.nextLine();
 
                     if ("/exit".equalsIgnoreCase(msg)) {
                         System.out.println("Closing connection...");
@@ -90,10 +92,11 @@ public class Client {
                 if (scanner != null) scanner.close();
                 if (out != null) out.close();
                 if (socket != null && !socket.isClosed()) socket.close();
-                if (readerThread != null && readerThread.isAlive()) readerThread.join();
+                if (readerThread != null) readerThread.join(); // Wait for thread to finish
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
+
             System.out.println("Client shut down.");
         }
     }

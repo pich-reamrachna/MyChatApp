@@ -27,12 +27,11 @@ public class ClientHandler implements Runnable {
             handleLogin();
 
             while (true) {
-                out.println("=== Main Menu ===");
+                out.println("Do you want to:");
                 out.println("1. Join a Room");
                 out.println("2. Create a Room");
                 out.println("3. Friend Menu");
                 out.println("Enter: ");
-                
                 String option = in.readLine();
 
                 if ("1".equals(option)) {
@@ -64,45 +63,29 @@ public class ClientHandler implements Runnable {
 
     private void handleLogin() throws IOException {
         while (true) {
-            out.println("PROMPT:Enter your username:");
+            out.println("Enter your username:");
             username = in.readLine();
 
             if (username == null || username.trim().isEmpty()) {
-                // Client disconnected
-                out.println("Invalid username. Please try again...");
+                out.println("Invalid username.");
                 continue;
             }
-            username = username.trim();
-            System.out.println("Received username: '" + username + "'");
-
 
             synchronized (Server.userPasswords) {
                 if (Server.userPasswords.containsKey(username)) {
-                    // Existing user, ask for password
-                    out.println("PROMPT:Username exists. Enter your password:");
+                    out.println("Username exists. Enter your password:");
                     String enteredPassword = in.readLine();
-
-                    if (enteredPassword == null) {
-                        socket.close();
-                        return;
-                    }
-                    enteredPassword = enteredPassword.trim();
-
                     if (!Server.userPasswords.get(username).equals(enteredPassword)) {
                         out.println("Wrong password. Try again.\n");
                         continue;
                     }
                 } else {
-                    // New user registration
-                    out.println("PROMPT:You're a new user! Please set your password:");
-            
+                    out.println("New user. Set your password:");
                     String newPassword = in.readLine();
                     if (newPassword == null || newPassword.trim().isEmpty()) {
-                        out.println("Password cannot be empty. Please try again...");
+                        out.println("Password cannot be empty.");
                         continue;
                     }
-
-
                     Server.userPasswords.put(username, newPassword);
                     out.println("User registered successfully.");
                 }
